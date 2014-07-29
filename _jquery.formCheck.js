@@ -23,6 +23,10 @@ $.fn.formCheck = function(option){
 
     function init(){
 
+        /*
+
+        */
+        
         $(self).find(defaults.className).blur(function(){            
             
             if(!checkIsChange($(this))){
@@ -139,7 +143,7 @@ $.fn.formCheck = function(option){
 
     function showErrorMess(errorStr){
        errorObj = $(defaults.errorMessId); 
-       $(errorObj).html("").html(errorStr);
+       $(errorObj).addClass(defaults.errorClass).html("").html(errorStr);
     }
 
     function checkInputValue(value, type ,isRequired){        
