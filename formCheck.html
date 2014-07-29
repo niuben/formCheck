@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+	<title>输入提示插件</title>
+	<link rel="stylesheet" href="formCheck.css">
+</head>
+
+<body>
+<form action="#" id="content">
+    <div id="errorMess" class="showmess"></div>
+	<span>账号：</span><input maxlength="30" class="input" type="text" checkType="emailMobile" isRequired = "1" value="" placeholder="邮箱/手机号"/>
+	<span>密码：</span><input class="input" maxlength="20" checkType="password" isRequired = "1" type="password" placeholder="密码(6-20位字符)"/>                
+	<input type="button" id="submitForm" value="登录预订">
+</form>
+
+<script type="text/javascript" src="../jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="_jquery.formCheck.js"></script>
+<script type="text/javascript">
+	$("#content").formCheck({
+        className: ".input",
+        submitId: "#submitForm",
+        errorMessId: "#errorMess",           
+        success: function(){
+            console.log("success!");
+        }
+  });
+</script>
+
+</body>
+</html>
