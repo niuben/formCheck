@@ -9,8 +9,8 @@
 <body>
 <form action="#" id="content">
     <div id="errorMess" class="showmess"></div>
-	<span>账号：</span><input maxlength="30" class="input" type="text" checkType="emailMobile" isRequired = "1" value="" placeholder="邮箱/手机号"/>
-	<span>密码：</span><input class="input" maxlength="20" checkType="password" isRequired = "1" type="password" placeholder="密码(6-20位字符)"/>                
+	<p><span>账号：</span><input maxlength="30" class="input" type="text" checkType="email" errormess="邮箱不符合规范"  placeholder="邮箱/手机号"/></p>
+	<p><span>密码：</span><input class="input" maxlength="20" checkType="password" type="password" errormess="密码格式不对，需要6-20位字符" placeholder="密码(6-20位字符)"/></p>
 	<input type="button" id="submitForm" value="登录预订">
 </form>
 
@@ -18,11 +18,12 @@
 <script type="text/javascript" src="_jquery.formCheck.js"></script>
 <script type="text/javascript">
 	$("#content").formCheck({
-        className: ".input",
         submitId: "#submitForm",
-        errorMessId: "#errorMess",           
-        success: function(){
+        successCallback: function(){
             console.log("success!");
+        },
+        errorCallback: function(){
+            console.log("error!");
         }
   });
 </script>

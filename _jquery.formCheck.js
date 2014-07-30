@@ -7,12 +7,18 @@ $.fn.formCheck = function(option){
         //点击提交的样式名
         submitId: "#form-submit",
         //错误提示信息显示区域ID
-        errorMessId: "#showMess",
+        errorMessId: null,
         //正确的样式
         correctClass: "success",
         //错误的样式
-        errorClass: "error"
-        
+        errorClass: "error",
+        //表单检查成功，触发回调函数
+        successCallback: function(){
+            null;
+        },
+        errorCallback: function(){
+            null;
+        }
     };
 
     this.isCorrect = 0;
@@ -22,19 +28,17 @@ $.fn.formCheck = function(option){
     $.extend(defaults, option);
 
     function init(){
-
-        /*
-
-        */
         
-        $(self).find(defaults.className).blur(function(){            
+        //
+        $(self).find("input[type='text'], input[type='password'], textarea").blur(function(){            
             
-            if(!checkIsChange($(this))){
-                return true;
-            }
-            var isCorrect = startCheck(this);
+            // if(!checkIsChange($(this))){
+            //     return true;
+            // }
+            var isCorrect = check(this);
             var isCheckOnly = checkIsOnly($(this));
             
+            //检查输入框值的唯一性
             if(isCorrect && isCheckOnly){
                 checkIsOnly($(this));
             }
@@ -48,27 +52,30 @@ $.fn.formCheck = function(option){
             e.preventDefault();
             self.isCorrect = 1;
           
-            $(self).find(defaults.className).each(function(){
+            $(self).find("input[type='text'],input[type='password'],textarea").each(function(){
                 
                 if(!checkIsChange($(this))){
                     return true;
                 }    
-                var isCorrect = startCheck(this);
+                var isCorrect = check(this);
                 var isCheckOnly = checkIsOnly($(this));                
+                
                 if(isCorrect && isCheckOnly){
                     checkIsOnly($(this));
                 }
                 if(!self.isCorrect){
                     window.scrollTo(0,0);
-                    return false;
+                    return true;
                 }
             });
 
             if(self.isCorrect){
-                defaults.success();
+                defaults.successCallback();
+            }else{
+                defaults.errorCallback();
             }
 
-    });
+        });
 
     };
     
@@ -94,18 +101,27 @@ $.fn.formCheck = function(option){
         return isCheckOnly ? true : false;
     }
 
-    function startCheck(obj){
+    function check(obj){
         var _type = $(obj).attr("checkType");
-        var _value = $(obj).val();        
+        var _value = $.trim($(obj).val());        
 
-        var isRequired = $(obj).attr("isRequired");
-        isRequired = isRequired == "0" ? 0 : 1;
+        var isIgnore = $(obj).attr("isIgnore");
+        isIgnore = isIgnore == "1" ? 1 : 0;
         // 获取输入框前面标题对象
-        var errorStr =checkInputValue(_value, _type, isRequired);
+        
+        var errorStr = null;
+        if(_value.length != 0){
+            if(!regular(_value, _type)){
+                errorStr = $(obj).attr("errormess");
+            }
+        }else{
+            if(!isIgnore){
+                errorStr = "不能为空";
+            }
+        }
+
         if(errorStr){
-            
             self.isCorrect = 0;        
-            //获得标题
             try{
                 var titleObj = $(obj).prev();
                 var titleStr = titleObj.text();
@@ -115,156 +131,58 @@ $.fn.formCheck = function(option){
             }
             
             errorStr = titleStr + errorStr;
-            showErrorMess(errorStr);  
+            showErrorMess(errorStr, obj);  
 
             return false;
         }else{            
-            showErrorMess("");
+            showCorrect(obj);
             return true;
         }
 
     }
-    
-    /*
-        设置输入框显示状态
-        stauts :
-    */
 
+    function showErrorMess(errorStr, obj){
+        var errorObj;
+        if(!defaults.errorMess){
+            errorObj = getNextDom(obj);
+        }else{
+            errorObj = $(defaults.errorMessId);
+        }
 
-    // function setInputClass(obj, stauts){
-    //     parent = obj.
-
-    //     if(stauts == "success"){
-
-    //     }
-
-
-    // }
-
-    function showErrorMess(errorStr){
-       errorObj = $(defaults.errorMessId); 
-       $(errorObj).addClass(defaults.errorClass).html("").html(errorStr);
+        $(errorObj).removeClass(defaults.correctClass).addClass(defaults.errorClass).html(errorStr);
     }
 
-    function checkInputValue(value, type ,isRequired){        
+    function showCorrect(obj){
+        var nextObj = getNextDom(obj);        
+        nextObj.removeClass(defaults.errorClass).addClass(defaults.correctClass).html("");
+    }
 
-        value=$.trim(value);
-        var _strLength=value.length;
-        if(type == "chineseEnglish"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-
-            if(!value.match(/^[\u0391-\uFFE5a-zA-z0-9\s]{1,}$/)){
-                return "请填写中文、英文、数字";
-            }
-        }if(type == "name"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-
-            if(!value.match(/^[\u0391-\uFFE5a-zA-z\s]{1,}$/)){
-                return "请填写中文、英文";
-            }
-        }else if(type == "password"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-            if(!value.match(/^[\u0391-\uFFE5a-zA-z0-9\s]{6,20}$/)){
-                return "请填写中文、英文、数字";
-            }
-        }else if(type == "chinese"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-            if(!value.match(/^[\u0391-\uFFE5]{1,}$/)){
-                return "只能填写中文";
-            }  
-        }else if(type == "emailMobile"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-            if(!value.match(/\w+([-+.]\w+)*@\w+([-.]\w+)*.\w+([-.]\w+)*/) && !value.match(/^1[0-9]{10}$/)){
-                return "格式有误"
-            }
-        }else if(type == "email"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";
-            }
-            if(!value.match(/\w+([-+.]\w+)*@\w+([-.]\w+)*.\w+([-.]\w+)*/)){
-                return "格式有误"
-            }
-        }else if(type == "mobile"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";                
-            }
-            if(!value.match(/^1[0-9]{10}$/)){
-                return "格式有误"
-            }
-        }else if(type == "phone"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";                
-            }
-            if(!value.match(/^(0[0-9]{2,3})?(\-)?([2-9][0-9]{6,7})+(\-[0-9]{1,4})?$/)){
-                return "格式有误"
-            }
-        }else if(type == "qq"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-
-            if(_strLength==0 && isRequired == 1){
-                return "不能为空";                
-            }
-            if(!value.match(/^[0-9]{5,11}$/)){
-                return "格式有误"
-            }
-        }else if(type == "file"){
-            if(_strLength==0 && isRequired == 0){
-                return false;
-            }
-            if(_strLength==0 && isRequired == 1){
-              return "上传文件不能为空";
-            }
-            if(getFileType(value)!="zip"){
-              return "必须为zip格式"
-            }
-        }else{
-          null;
+    function getNextDom(obj){
+        var nextObj = $(obj).next();
+        if(!nextObj.length){
+            createNextDom(obj);
+            nextObj = $(obj).next();
         }
-        return false;
+        return nextObj;
+
+    }
+
+    function createNextDom(obj){
+        $(obj).after("<span></span>");
+    }
+    function regular(value, type){        
+        value = $.trim(value);
+        var regularObj = {
+            "chineseEnglish": /^[\u0391-\uFFE5a-zA-z0-9\s]{1,}$/,
+            "chinese": /^[\u0391-\uFFE5]{1,}$/,
+            "email": /\w+([-+.]\w+)*@\w+([-.]\w+)*.\w+([-.]\w+)*/,
+            "phone": /^1[0-9]{10}$/,
+            "qq": /^[0-9]{5,11}$/,
+            "password": /^[a-zA-z0-9]{6,20}$/,
+            "telphone": /^(0[0-9]{2,3})?(\-)?([2-9][0-9]{6,7})+(\-[0-9]{1,4})?$/
+        };
+
+        return regularObj[type].test(value);
     }
 
     init();
