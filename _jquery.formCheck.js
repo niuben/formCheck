@@ -1,35 +1,44 @@
 $.fn.formCheck = function(option){
 
     var defaults={          
-        
-        //需要验证的样式名        
-        className:'.check-form',
-        //点击提交的样式名
-        submitId: "#form-submit",
-        //错误提示信息显示区域ID
-        errorMessId: null,
-        //正确的样式
-        correctClass: "success",
-        //错误的样式
-        errorClass: "error",
+        //提交按钮的ID, 默认为空。没有填写的话，会自动寻找表单最后一个按钮。
+        submitID: null,
+        //错误提示信息显示区域ID（主要用于只能在一个位置上显示错误时）
+        errorMessID: null,
+        //填写正确加载的样式，默认是空
+        correctClass: null,
+        //填写错误加载的样式，
+        errorClass: null,
+        //当自带检查不能满足要求时，增加类型判断。比如每个业务对密码判断都不一样。
+        addRegularObj: {},
         //表单检查成功，触发回调函数
-        successCallback: function(){
+        sucCallback: function(){
             null;
         },
-        errorCallback: function(){
+        errCallback: function(){
             null;
         }
     };
 
     this.isCorrect = 0;
 
+    var regularObj = {
+        "chinese": /^[\u0391-\uFFE5]{1,}$/,        
+        "english": /^[a-zA-z\s]{1,}$/,
+        "number": /^[0-9]{1,}$/, 
+        "chineseEnglish": /^[\u0391-\uFFE5a-zA-z0-9\s]{1,}$/,
+        "email": /\w+([-+.]\w+)*@\w+([-.]\w+)*.\w+([-.]\w+)*/,
+        "phone": /^1[0-9]{10}$/,
+        "qq": /^[0-9]{5,11}$/,
+        "telphone": /^(0[0-9]{2,3})?(\-)?([2-9][0-9]{6,7})+(\-[0-9]{1,4})?$/
+    };
+
     var self = this;
 
     $.extend(defaults, option);
 
     function init(){
-        
-        //
+    
         $(self).find("input[type='text'], input[type='password'], textarea").blur(function(){            
             
             // if(!checkIsChange($(this))){
@@ -48,7 +57,14 @@ $.fn.formCheck = function(option){
             }
         });
 
-        $(defaults.submitId).click(function(e){      
+        var submitObj;
+        if(defaults.submitID != null){
+            submitObj = $("#" + defaults.submitID);
+        }else{
+            submitObj = getFormLastButton();
+        }
+
+        $(submitObj).click(function(e){      
             e.preventDefault();
             self.isCorrect = 1;
           
@@ -70,13 +86,14 @@ $.fn.formCheck = function(option){
             });
 
             if(self.isCorrect){
-                defaults.successCallback();
+                defaults.sucCallback();
             }else{
-                defaults.errorCallback();
+                defaults.errCallback();
             }
 
         });
 
+        addRegular(defaults.addRegularObj);
     };
     
     function checkIsChange(obj){
@@ -93,14 +110,15 @@ $.fn.formCheck = function(option){
         }else{
             return true;
         }
-    }
+    };
 
+    //判断是否需要检查账号的唯一性
     function checkIsOnly(obj){
-        //判断是否需要检查账号的唯一性
         var isCheckOnly = $(obj).attr("isCheckOnly");
         return isCheckOnly ? true : false;
-    }
+    };
 
+    //检查一个表单对象
     function check(obj){
         var _type = $(obj).attr("checkType");
         var _value = $.trim($(obj).val());        
@@ -111,7 +129,7 @@ $.fn.formCheck = function(option){
         
         var errorStr = null;
         if(_value.length != 0){
-            if(!regular(_value, _type)){
+            if(!checkRegular(_value, _type)){
                 errorStr = $(obj).attr("errormess");
             }
         }else{
@@ -122,39 +140,64 @@ $.fn.formCheck = function(option){
 
         if(errorStr){
             self.isCorrect = 0;        
-            try{
-                var titleObj = $(obj).prev();
-                var titleStr = titleObj.text();
-                titleStr = titleStr.substr(0,titleStr.length - 1);
-            }catch(e){
-                var titleStr = "";                            
-            }
+            // try{
+            //     var titleObj = $(obj).prev();
+            //     var titleStr = titleObj.text();
+            //     titleStr = titleStr.substr(0,titleStr.length - 1);
+            // }catch(e){
+            //     var titleStr = "";                            
+            // }
             
-            errorStr = titleStr + errorStr;
+            // errorStr = titleStr + errorStr;
             showErrorMess(errorStr, obj);  
-
             return false;
         }else{            
             showCorrect(obj);
             return true;
         }
 
-    }
+    };
+
+    function addRegular(obj){
+        $.extend(regularObj, obj);
+    };
+
+    function checkRegular(value, type){        
+        value = $.trim(value);
+        return regularObj[type].test(value);
+    };
 
     function showErrorMess(errorStr, obj){
         var errorObj;
         if(!defaults.errorMess){
-            errorObj = getNextDom(obj);
+            nextObj = getNextDom(obj);
         }else{
-            errorObj = $(defaults.errorMessId);
+            nextObj = $(defaults.errorMessId);
         }
 
-        $(errorObj).removeClass(defaults.correctClass).addClass(defaults.errorClass).html(errorStr);
-    }
+        if(defaults.correctClass || defaults.errorClass){
+            $(nextObj).removeClass(defaults.correctClass).addClass(defaults.errorClass);
+        }else{
+            $(nextObj).css("color", "#F00");
+        }
+        $(nextObj).html(errorStr);
+
+        $(obj).css("border-color", "#F00");
+    };
 
     function showCorrect(obj){
-        var nextObj = getNextDom(obj);        
-        nextObj.removeClass(defaults.errorClass).addClass(defaults.correctClass).html("");
+        var nextObj = getNextDom(obj);
+        if(defaults.correctClass || defaults.errorClass){
+            nextObj.removeClass(defaults.errorClass).addClass(defaults.correctClass)
+        }else{
+            $(nextObj).css("color", "initial");
+        }
+        $(nextObj).html("");
+        $(obj).css("border-color", "initial");        
+    };
+
+    function getFormLastButton(){
+        return self.find("input[type='button'], input[type='submit']").last();
     }
 
     function getNextDom(obj){
@@ -164,26 +207,11 @@ $.fn.formCheck = function(option){
             nextObj = $(obj).next();
         }
         return nextObj;
-
-    }
+    };
 
     function createNextDom(obj){
-        $(obj).after("<span></span>");
-    }
-    function regular(value, type){        
-        value = $.trim(value);
-        var regularObj = {
-            "chineseEnglish": /^[\u0391-\uFFE5a-zA-z0-9\s]{1,}$/,
-            "chinese": /^[\u0391-\uFFE5]{1,}$/,
-            "email": /\w+([-+.]\w+)*@\w+([-.]\w+)*.\w+([-.]\w+)*/,
-            "phone": /^1[0-9]{10}$/,
-            "qq": /^[0-9]{5,11}$/,
-            "password": /^[a-zA-z0-9]{6,20}$/,
-            "telphone": /^(0[0-9]{2,3})?(\-)?([2-9][0-9]{6,7})+(\-[0-9]{1,4})?$/
-        };
-
-        return regularObj[type].test(value);
-    }
+        $(obj).after('<span style="margin-left: 5px;"></span>');
+    };
 
     init();
 }    

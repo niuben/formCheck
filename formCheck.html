@@ -3,29 +3,35 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 	<title>输入提示插件</title>
-	<link rel="stylesheet" href="formCheck.css">
+    <style>
+        .input{
+            border-width: 1px;
+            border-style: solid;
+            height: 30px;
+            width: 200px;
+        }
+    </style>
 </head>
 
 <body>
 <form action="#" id="content">
     <div id="errorMess" class="showmess"></div>
-	<p><span>账号：</span><input maxlength="30" class="input" type="text" checkType="email" errormess="邮箱不符合规范"  placeholder="邮箱/手机号"/></p>
-	<p><span>密码：</span><input class="input" maxlength="20" checkType="password" type="password" errormess="密码格式不对，需要6-20位字符" placeholder="密码(6-20位字符)"/></p>
-	<input type="button" id="submitForm" value="登录预订">
+	<p>
+        <span>账号：</span>
+        <input  class="input" type="text" checkType="email" errormess="邮箱不符合规范" maxlength="30" _placeholder="邮箱/手机号"/></p>
+	<p>
+        <span>密码：</span>
+        <input class="input" maxlength="20" checkType="password" type="password" errormess="密码格式不对，需要6-20位字符" _placeholder="密码(6-20位字符)"/>
+    </p>
+	<input type="submit" id="submitForm" value="登录预订">
 </form>
 
 <script type="text/javascript" src="../jquery-1.7.1.min.js"></script>
 <script type="text/javascript" src="_jquery.formCheck.js"></script>
 <script type="text/javascript">
 	$("#content").formCheck({
-        submitId: "#submitForm",
-        successCallback: function(){
-            console.log("success!");
-        },
-        errorCallback: function(){
-            console.log("error!");
-        }
-  });
+        addRegularObj:{"password": /^[a-zA-z0-9]{6,20}$/},
+    });
 </script>
 
 </body>
